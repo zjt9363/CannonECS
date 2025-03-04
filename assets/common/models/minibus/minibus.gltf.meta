@@ -1,0 +1,560 @@
+{
+  "ver": "2.3.13",
+  "importer": "gltf",
+  "imported": true,
+  "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0",
+  "files": [],
+  "subMetas": {
+    "50743": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@50743",
+      "displayName": "",
+      "id": "50743",
+      "name": "UnnamedTexture-5.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/rimstock_04.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "87456": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@87456",
+      "displayName": "",
+      "id": "87456",
+      "name": "Mesh.019.mesh",
+      "userData": {
+        "gltfIndex": 8,
+        "triangleCount": 402
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "89212": {
+      "importer": "gltf-scene",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@89212",
+      "displayName": "",
+      "id": "89212",
+      "name": "minibus.prefab",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a88f6": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@a88f6",
+      "displayName": "",
+      "id": "a88f6",
+      "name": "Mesh.011.mesh",
+      "userData": {
+        "gltfIndex": 0,
+        "triangleCount": 1110
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "c2762": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@c2762",
+      "displayName": "",
+      "id": "c2762",
+      "name": "Mesh.012.mesh",
+      "userData": {
+        "gltfIndex": 1,
+        "triangleCount": 4075
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "c4192": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@c4192",
+      "displayName": "",
+      "id": "c4192",
+      "name": "Mesh.013.mesh",
+      "userData": {
+        "gltfIndex": 2,
+        "triangleCount": 2714
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "145db": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@145db",
+      "displayName": "",
+      "id": "145db",
+      "name": "Mesh.014.mesh",
+      "userData": {
+        "gltfIndex": 3,
+        "triangleCount": 178
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "575aa": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@575aa",
+      "displayName": "",
+      "id": "575aa",
+      "name": "Mesh.015.mesh",
+      "userData": {
+        "gltfIndex": 4,
+        "triangleCount": 112
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "5003a": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@5003a",
+      "displayName": "",
+      "id": "5003a",
+      "name": "Mesh.016.mesh",
+      "userData": {
+        "gltfIndex": 5,
+        "triangleCount": 460
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "1dcb4": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@1dcb4",
+      "displayName": "",
+      "id": "1dcb4",
+      "name": "Mesh.017.mesh",
+      "userData": {
+        "gltfIndex": 6,
+        "triangleCount": 200
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "13f99": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@13f99",
+      "displayName": "",
+      "id": "13f99",
+      "name": "Mesh.018.mesh",
+      "userData": {
+        "gltfIndex": 7,
+        "triangleCount": 402
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9c123": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9c123",
+      "displayName": "",
+      "id": "9c123",
+      "name": "Mesh.020.mesh",
+      "userData": {
+        "gltfIndex": 9,
+        "triangleCount": 402
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "538ca": {
+      "importer": "gltf-mesh",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@538ca",
+      "displayName": "",
+      "id": "538ca",
+      "name": "Mesh.021.mesh",
+      "userData": {
+        "gltfIndex": 10,
+        "triangleCount": 402
+      },
+      "ver": "1.1.1",
+      "imported": true,
+      "files": [
+        ".bin",
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "3effa": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@3effa",
+      "displayName": "",
+      "id": "3effa",
+      "name": "UnnamedTexture-0.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/ucb_bottom3_bump_NRM.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "221a5": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@221a5",
+      "displayName": "",
+      "id": "221a5",
+      "name": "UnnamedTexture-1.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/chvan_texture_nrm.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "0089c": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@0089c",
+      "displayName": "",
+      "id": "0089c",
+      "name": "UnnamedTexture-2.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/chvan_texture_dff.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9b633": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9b633",
+      "displayName": "",
+      "id": "9b633",
+      "name": "UnnamedTexture-3.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/chvan_texture_chrome_nrm.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "9b782": {
+      "importer": "texture",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9b782",
+      "displayName": "",
+      "id": "9b782",
+      "name": "UnnamedTexture-4.texture",
+      "userData": {
+        "wrapModeS": "repeat",
+        "wrapModeT": "repeat",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": false,
+        "imageUuidOrDatabaseUri": "db://assets/common/models/minibus/rimstock_04.png"
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "726f4": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@726f4",
+      "displayName": "",
+      "id": "726f4",
+      "name": "ucb_bottom3.001.material",
+      "userData": {
+        "gltfIndex": 0
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "3912d": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@3912d",
+      "displayName": "",
+      "id": "3912d",
+      "name": "chvan_body.001.material",
+      "userData": {
+        "gltfIndex": 1
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "a7c4e": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@a7c4e",
+      "displayName": "",
+      "id": "a7c4e",
+      "name": "chvan_chrome.001.material",
+      "userData": {
+        "gltfIndex": 2
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "4231c": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@4231c",
+      "displayName": "",
+      "id": "4231c",
+      "name": "void.001.material",
+      "userData": {
+        "gltfIndex": 3
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "67ae3": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@67ae3",
+      "displayName": "",
+      "id": "67ae3",
+      "name": "glass.001.material",
+      "userData": {
+        "gltfIndex": 4
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "2ac9b": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@2ac9b",
+      "displayName": "",
+      "id": "2ac9b",
+      "name": "Material #0.001.material",
+      "userData": {
+        "gltfIndex": 5
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "164f9": {
+      "importer": "gltf-material",
+      "uuid": "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@164f9",
+      "displayName": "",
+      "id": "164f9",
+      "name": "wheels.001.material",
+      "userData": {
+        "gltfIndex": 6
+      },
+      "ver": "1.0.14",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "imageMetas": [
+      {
+        "name": "ucb_bottom3_bump_NRM",
+        "uri": "db://assets/common/models/minibus/ucb_bottom3_bump_NRM.png"
+      },
+      {
+        "name": "chvan_texture_nrm",
+        "uri": "db://assets/common/models/minibus/chvan_texture_nrm.png"
+      },
+      {
+        "name": "chvan_texture_dff",
+        "uri": "db://assets/common/models/minibus/chvan_texture_dff.png"
+      },
+      {
+        "name": "chvan_texture_chrome_nrm",
+        "uri": "db://assets/common/models/minibus/chvan_texture_chrome_nrm.png"
+      },
+      {
+        "name": "rimstock_04",
+        "uri": "db://assets/common/models/minibus/rimstock_04.png"
+      }
+    ],
+    "legacyFbxImporter": false,
+    "assetFinder": {
+      "meshes": [
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@a88f6",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@c2762",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@c4192",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@145db",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@575aa",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@5003a",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@1dcb4",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@13f99",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@87456",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9c123",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@538ca"
+      ],
+      "skeletons": [],
+      "textures": [
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@3effa",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@221a5",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@0089c",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9b633",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@9b782",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@50743"
+      ],
+      "materials": [
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@726f4",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@3912d",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@a7c4e",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@4231c",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@67ae3",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@2ac9b",
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@164f9"
+      ],
+      "scenes": [
+        "e302352e-c521-4a57-bc26-a0d7a8eb7fd0@89212"
+      ]
+    },
+    "useVertexColors": false,
+    "dumpMaterials": false,
+    "materialDumpDir": "db://assets/common/models/minibus/Materials_minibus",
+    "mountAllAnimationsOnPrefab": true,
+    "lods": {
+      "enable": false,
+      "hasBuiltinLOD": false,
+      "options": [
+        {
+          "screenRatio": 0.25,
+          "faceCount": 1
+        },
+        {
+          "screenRatio": 0.125,
+          "faceCount": 0.25
+        },
+        {
+          "screenRatio": 0.01,
+          "faceCount": 0.1
+        }
+      ]
+    },
+    "meshSimplify": {
+      "enable": true,
+      "targetRatio": 1
+    }
+  }
+}
