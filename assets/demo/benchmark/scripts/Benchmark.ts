@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Prefab, instantiate, Vec2, EventTouch, EditBox, Vec3, randomRange, random, LabelComponent, Quat, Toggle, PhysicsSystem, profiler, RigidBodyComponent, director, Director, math } from "cc";
+import { _decorator, Component, Node, Prefab, instantiate, Vec2, EventTouch, EditBox, Vec3, randomRange, random, LabelComponent, Quat, Toggle, PhysicsSystem, profiler, RigidBodyComponent, director, Director, math, MeshRenderer, BoxCollider, SphereCollider } from "cc";
 import { ProfilerManager } from "../../../common/scripts/ProfilerManager";
 import { ECSManager } from "./ECSManager";
 const { ccclass, property, menu } = _decorator;
@@ -117,7 +117,9 @@ export class Benchmark extends Component {
         this.l_current.string = "目前数量：" + this.initBoxCount + "-" + this.initSphereCount + "-" + this.initBoxRBCount + "-" + this.initSphereRBCount;
         this.instantiate(this.initBoxCount, this.box, this.boxContainer);
         this.instantiate(this.initSphereCount, this.sphere, this.sphereContainer);
+        console.info("boxRB:")
         this.instantiate(this.initBoxRBCount, this.boxRB, this.boxRBContainer);
+        console.info("sphereRB:")
         this.instantiate(this.initSphereRBCount, this.sphereRB, this.sphereRBContainer);
 
         // this.onRotateToggole(this.r_rotateToggle);
@@ -142,13 +144,14 @@ export class Benchmark extends Component {
         //     this.rotateDynamics.setAngularVelocity(v3_0);
         // else
         //     this.rotateDynamics.setAngularVelocity(Vec3.ZERO as Vec3);
+        this.ECSManager.pipeline(this.ECSManager.world)
     }
 
     onDestroy() {
-        PhysicsSystem.instance.enable = true;
-        PhysicsSystem.instance.fixedTimeStep = 1 / 60;
-        PhysicsSystem.instance.maxSubSteps = 1;
-        PhysicsSystem.instance.gravity = new Vec3(0, -10, 0);
+        // PhysicsSystem.instance.enable = true;
+        // PhysicsSystem.instance.fixedTimeStep = 1 / 60;
+        // PhysicsSystem.instance.maxSubSteps = 1;
+        // PhysicsSystem.instance.gravity = new Vec3(0, -10, 0);
     }
 
     private instantiate(count: number, prefab: Prefab, container: Node) {
@@ -159,6 +162,9 @@ export class Benchmark extends Component {
 
     private instantiateSingle(prefab: Prefab, container: Node) {
         const entity = instantiate(prefab) as Node;
+        console.info(entity.getComponent(MeshRenderer))
+        console.info(entity.getComponent(BoxCollider))
+        console.info(entity.getComponent(SphereCollider))
         this.resetTransformSingle(entity);
         container.addChild(entity);
         this.ECSManager.addEntity(entity);
