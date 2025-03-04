@@ -47,7 +47,7 @@
       },
       "physics": {
         "_value": true,
-        "_option": "physics-cannon",
+        "_option": "physics-physx",
         "_flags": {
           "physics-ammo": {
             "LOAD_BULLET_MANUALLY": false
@@ -58,7 +58,7 @@
         }
       },
       "physics-ammo": {
-        "_value": true,
+        "_value": "physics-ammo",
         "_flags": {
           "physics-ammo": {
             "LOAD_BULLET_MANUALLY": false
@@ -204,7 +204,7 @@
       "light-probe",
       "marionette",
       "particle",
-      "physics-cannon",
+      "physics-physx",
       "primitive",
       "profiler",
       "skeletal-animation",
@@ -217,7 +217,9 @@
       "value": false,
       "version": ""
     },
-    "flags": {}
+    "flags": {
+      "LOAD_PHYSX_MANUALLY": false
+    }
   },
   "__version__": "1.0.10"
 }

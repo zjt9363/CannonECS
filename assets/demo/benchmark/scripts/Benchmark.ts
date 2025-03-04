@@ -70,18 +70,18 @@ export class Benchmark extends Component {
     @property({ type: EditBox })
     readonly r_IntervalEditBox: EditBox = null!;
 
-    @property({ type: RigidBodyComponent })
-    readonly rotateDynamics: RigidBodyComponent = null!;
+    // @property({ type: RigidBodyComponent })
+    // readonly rotateDynamics: RigidBodyComponent = null!;
 
     private initBoxCount: number = 0;
     private initSphereCount: number = 0;
     private initBoxRBCount: number = 0;
     private initSphereRBCount: number = 0;
 
-    private intervalCurrent: number = 0;
-    private intervalNumber: number = 0;
+    // private intervalCurrent: number = 0;
+    // private intervalNumber: number = 0;
 
-    private enableRotate = true;
+    // private enableRotate = true;
 
     start() {
         this.node.addComponent(ProfilerManager);
@@ -117,28 +117,28 @@ export class Benchmark extends Component {
         this.instantiate(this.initBoxRBCount, this.boxRB, this.boxRBContainer);
         this.instantiate(this.initSphereRBCount, this.sphereRB, this.sphereRBContainer);
 
-        this.onRotateToggole(this.r_rotateToggle);
-        this.onEditFrameRate(this.r_frameRateEditBox);
-        this.onEditSubStep(this.r_subStepEditBox);
-        this.onEditInterval(this.r_IntervalEditBox);
+        // this.onRotateToggole(this.r_rotateToggle);
+        // this.onEditFrameRate(this.r_frameRateEditBox);
+        // this.onEditSubStep(this.r_subStepEditBox);
+        // this.onEditInterval(this.r_IntervalEditBox);
 
-        PhysicsSystem.instance.resetAccumulator(0);
-        PhysicsSystem.instance.enable = true;
+        // PhysicsSystem.instance.resetAccumulator(0);
+        // PhysicsSystem.instance.enable = true;
     }
 
     update() {
-        if (this.intervalCurrent == 0) {
-            PhysicsSystem.instance.enable = true;
-            this.intervalCurrent = this.intervalNumber;
-        } else {
-            this.intervalCurrent--;
-            PhysicsSystem.instance.enable = false;
-        }
+        // if (this.intervalCurrent == 0) {
+        //     PhysicsSystem.instance.enable = true;
+        //     this.intervalCurrent = this.intervalNumber;
+        // } else {
+        //     this.intervalCurrent--;
+        //     PhysicsSystem.instance.enable = false;
+        // }
 
-        if (this.enableRotate)
-            this.rotateDynamics.setAngularVelocity(v3_0);
-        else
-            this.rotateDynamics.setAngularVelocity(Vec3.ZERO as Vec3);
+        // if (this.enableRotate)
+        //     this.rotateDynamics.setAngularVelocity(v3_0);
+        // else
+        //     this.rotateDynamics.setAngularVelocity(Vec3.ZERO as Vec3);
     }
 
     onDestroy() {
@@ -239,34 +239,34 @@ export class Benchmark extends Component {
         this.resetTransforms();
     }
 
-    onRotateToggole(toggle: Toggle) {
-        this.enableRotate = toggle.isChecked;
-    }
+    // onRotateToggole(toggle: Toggle) {
+    //     this.enableRotate = toggle.isChecked;
+    // }
 
-    onEditFrameRate(editBox: EditBox) {
-        const v = parseInt(editBox.string);
-        if (isNaN(v)) return;
+    // onEditFrameRate(editBox: EditBox) {
+    //     const v = parseInt(editBox.string);
+    //     if (isNaN(v)) return;
 
-        let fr = math.clamp(v, 30, 300);
-        editBox.string = fr + '';
-        PhysicsSystem.instance.fixedTimeStep = 1 / fr;
-    }
+    //     let fr = math.clamp(v, 30, 300);
+    //     editBox.string = fr + '';
+    //     PhysicsSystem.instance.fixedTimeStep = 1 / fr;
+    // }
 
-    onEditSubStep(editBox: EditBox) {
-        const v = parseInt(editBox.string);
-        if (isNaN(v)) return;
+    // onEditSubStep(editBox: EditBox) {
+    //     const v = parseInt(editBox.string);
+    //     if (isNaN(v)) return;
 
-        if (v >= 0) {
-            PhysicsSystem.instance.maxSubSteps = v;
-        }
-    }
+    //     if (v >= 0) {
+    //         PhysicsSystem.instance.maxSubSteps = v;
+    //     }
+    // }
 
-    onEditInterval(editBox: EditBox) {
-        const v = parseInt(editBox.string);
-        if (isNaN(v)) return;
+    // onEditInterval(editBox: EditBox) {
+    //     const v = parseInt(editBox.string);
+    //     if (isNaN(v)) return;
 
-        if (v >= 0) {
-            this.intervalNumber = v;
-        }
-    }
+    //     if (v >= 0) {
+    //         this.intervalNumber = v;
+    //     }
+    // }
 }
