@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Prefab, instantiate, Vec2, EventTouch, EditBox, Vec3, randomRange, random, LabelComponent, Quat, Toggle, PhysicsSystem, profiler, RigidBodyComponent, director, Director, math } from "cc";
 import { ProfilerManager } from "../../../common/scripts/ProfilerManager";
+import { ECSManager } from "./ECSManager";
 const { ccclass, property, menu } = _decorator;
 
 export const KEY_INIT_STR = "KEY_INIT_STR";
@@ -83,6 +84,8 @@ export class Benchmark extends Component {
 
     // private enableRotate = true;
 
+    ECSManager = new ECSManager();
+
     start() {
         this.node.addComponent(ProfilerManager);
 
@@ -158,6 +161,7 @@ export class Benchmark extends Component {
         const entity = instantiate(prefab) as Node;
         this.resetTransformSingle(entity);
         container.addChild(entity);
+        this.ECSManager.addEntity(entity);
         this.updateCurrentLab();
     }
 
