@@ -144,7 +144,8 @@ export class Benchmark extends Component {
         //     this.rotateDynamics.setAngularVelocity(v3_0);
         // else
         //     this.rotateDynamics.setAngularVelocity(Vec3.ZERO as Vec3);
-        this.ECSManager.pipeline(this.ECSManager.world)
+
+        this.ECSManager.pipeline(this.ECSManager.world) // TODO: 测试ECS
     }
 
     onDestroy() {
@@ -162,9 +163,14 @@ export class Benchmark extends Component {
 
     private instantiateSingle(prefab: Prefab, container: Node) {
         const entity = instantiate(prefab) as Node;
-        console.info(entity.getComponent(MeshRenderer))
-        console.info(entity.getComponent(BoxCollider))
-        console.info(entity.getComponent(SphereCollider))
+        // console.info(entity.getComponent(MeshRenderer))
+        
+        // if (entity.getComponent(BoxCollider)) {
+        //     console.info(entity.getComponent(BoxCollider))
+        // }
+        // if (entity.getComponent(SphereCollider)) {
+        //     console.info(entity.getComponent(SphereCollider))
+        // }
         this.resetTransformSingle(entity);
         container.addChild(entity);
         this.ECSManager.addEntity(entity);
