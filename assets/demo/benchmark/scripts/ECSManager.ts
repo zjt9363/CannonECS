@@ -21,6 +21,13 @@ import {
 import {BoxCollider, Node, game, SphereCollider} from 'cc';
 
 const NodeMap = new Map<number, Node>();
+const StatusEnum = {
+    DIRTY: 1 << 0,
+    BOX: 1 << 1,
+    SPHERE: 1 << 2,
+    SHAPE_BIT: 1 << 1 | 1 << 2,
+}
+
 export class ECSManager {
     world: IWorld = createWorld();
 
@@ -38,17 +45,24 @@ export class ECSManager {
     IsStatic = defineComponent({value: Types.i8});
     BridgeInfo = defineComponent({value: Types.i16});
     AABB = defineComponent(this.VectorAABB);
-    CollisionPair = defineComponent({entityA: Types.i16, entityB: Types.i16});
+    CollisionPair = defineComponent({entityA: Types.eid, entityB: Types.eid});
+    ShapeSize = defineComponent({x: Types.f32, y: Types.f32, z: Types.f32, radius: Types.f32});
+    BitStatus = defineComponent({value: Types.i16});
+    /**
+     * 状态位：
+     * 0: dirty
+     * 1: box
+     * 2: sphere
+     */
 
     MovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
     CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
     UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]); // TODO: 完善AABB查询
-
-    NodeId = 0;
-
     movementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale, this.Velocity, this.AngularVelocity, Not(this.IsStatic)]);
     syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
     collisionQuery = defineQuery([this.WorldPosition, this.Velocity, this.AngularVelocity, this.AABB, this.Mass, this.MomentOfInertia]);
+
+    NodeId = 0;
 
     constructor() {}
 
@@ -69,6 +83,18 @@ export class ECSManager {
         this.WorldScale.x[eid] = node.getScale().x;
         this.WorldScale.y[eid] = node.getScale().y;
         this.WorldScale.z[eid] = node.getScale().z;
+
+        addComponent(this.world, this.BitStatus, eid);
+        addComponent(this.world, this.ShapeSize, eid);
+        if (node.name == "Box-RB" || "Box") {
+            this.BitStatus.value[eid] = StatusEnum.BOX | StatusEnum.DIRTY;
+            this.ShapeSize.x[eid] = node.getComponent(BoxCollider)?.size.x ?? 0;
+            this.ShapeSize.y[eid] = node.getComponent(BoxCollider)?.size.y ?? 0;
+            this.ShapeSize.z[eid] = node.getComponent(BoxCollider)?.size.z ?? 0;
+        } else {
+            this.BitStatus.value[eid] = StatusEnum.SPHERE | StatusEnum.DIRTY;
+            this.ShapeSize.radius[eid] = node.getComponent(SphereCollider)?.radius ?? 0;
+        }
 
         addComponent(this.world, this.Velocity, eid);
         this.Velocity.x[eid] = isStatic ? 0 : 1.0;
@@ -139,58 +165,36 @@ export class ECSManager {
                     continue;
                 }
                 const entityB = entities[j];
-                const aabb1 = {
-                    min: { x: this.AABB.min.x[entityA], y: this.AABB.min.y[entityA], z: this.AABB.min.z[entityA] },
-                    max: { x: this.AABB.max.x[entityA], y: this.AABB.max.y[entityA], z: this.AABB.max.z[entityA] }
-                };
-                const aabb2 = {
-                    min: { x: this.AABB.min.x[entityB], y: this.AABB.min.y[entityB], z: this.AABB.min.z[entityB] },
-                    max: { x: this.AABB.max.x[entityB], y: this.AABB.max.y[entityB], z: this.AABB.max.z[entityB] }
-                };
-                if (!this.checkAABBOverlap(aabb1, aabb2)) {
+                if (!this.checkAABBOverlap(entityA, entityB)) {
                     continue;
                 }
-                if (this.narrowPhaseCollisionDetection(entityA, entityB)) {
+                if (this.narrowPhaseCollision[this.BitStatus.value[entityA] | this.BitStatus.value[entityB] | StatusEnum.SHAPE_BIT](entityA, entityB)) {
                     this.makeCollisionPair(entityA, entityB);
                 }
             }
         }
     }
 
-    private narrowPhaseCollisionDetection(entityA: number, entityB: number): boolean {
-        if (this.isBox(entityA) && this.isBox(entityB)) {
-            return this.checkBoxBoxCollision(entityA, entityB);
-        } else if (!this.isBox(entityA) && !this.isBox(entityB)) {
-            return this.checkSphereSphereCollision(entityA, entityB);
-        } else {
-            return this.checkBoxSphereCollision(entityA, entityB);
-        }
+    private narrowPhaseCollision = {
+        [StatusEnum.BOX]: (entityA: number, entityB: number) => {
+            return false
+        },
+        [StatusEnum.SPHERE | StatusEnum.BOX]: (entityA: number, entityB: number) => {
+            return false
+        },
+        [StatusEnum.SPHERE]: (entityA: number, entityB: number) => {
+            const dx = this.WorldPosition.x[entityA] - this.WorldPosition.x[entityB];
+            const dy = this.WorldPosition.y[entityA] - this.WorldPosition.y[entityB];
+            const dz = this.WorldPosition.z[entityA] - this.WorldPosition.z[entityB];
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            return distance <= this.ShapeSize.x[entityA] + this.ShapeSize.x[entityB];
+        },
     }
 
-    private checkBoxBoxCollision(entityA: number, entityB: number): boolean {
-        // TODO: 检测两个box是否碰撞
-        return false;
-    }
-
-    private checkBoxSphereCollision(entityA: number, entityB: number): boolean {
-        // TODO: 检测box和sphere是否碰撞
-        return false;
-    }
-
-    private checkSphereSphereCollision(entityA: number, entityB: number): boolean {
-        // TODO: 检测两个sphere是否碰撞
-        return false;
-    }
 
     private isBox(entity: number): boolean {
-        const node = NodeMap.get(this.BridgeInfo.value[entity]);
-        if (!node) {
-            console.error("Node not found");
-        }
-        return node?.getComponent(BoxCollider) !== null;
+        return (this.BitStatus.value[entity] & StatusEnum.BOX) != 0;
     }
-
-
 
     private makeCollisionPair(entityA: number, entityB: number) {
         const eid = addEntity(this.world);
@@ -203,26 +207,37 @@ export class ECSManager {
         const entities = this.UpDateAAPPQuery(world);
         for (let i = 0; i < entities.length; i++) {
             const entity = entities[i];
-            if (this.isBox(entity)) {
-                this.calculateBoxAABB(entity);
-            } else {
-                this.calculateSphereAABB(entity);
-            }
+            this.calculateAABB[this.BitStatus.value[entity] | StatusEnum.SPHERE](entity);
         }
     }
 
-    private calculateBoxAABB(entity: number) {
-        // TODO: 计算AABB
+    private calculateAABB = {
+        [StatusEnum.BOX]: (entity: number) => {
+            // TODO: 计算box的AABB
+        },
+        [StatusEnum.SPHERE]: (entity: number) => {
+            // TODO: 计算sphere的AABB
+        },
     }
 
-    private calculateSphereAABB(entity: number) {
-        // TODO: 计算AABB
-    }
 
-    private checkAABBOverlap(aabb1: any, aabb2: any): boolean {
-        return (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x) &&
-               (aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y) &&
-               (aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z);
+    private checkAABBOverlap(entityA: number, entityB: number): boolean {
+        const overlabX = (this.AABB.min.x[entityA] <= this.AABB.max.x[entityB] && 
+                         this.AABB.min.x[entityA] >= this.AABB.min.x[entityB]) || 
+                        (this.AABB.max.x[entityA] <= this.AABB.max.x[entityB] && 
+                         this.AABB.max.x[entityA] >= this.AABB.min.x[entityB]);
+        
+        const overlabY = (this.AABB.min.y[entityA] <= this.AABB.max.y[entityB] && 
+                         this.AABB.min.y[entityA] >= this.AABB.min.y[entityB]) || 
+                        (this.AABB.max.y[entityA] <= this.AABB.max.y[entityB] && 
+                         this.AABB.max.y[entityA] >= this.AABB.min.y[entityB]);
+        
+        const overlabZ = (this.AABB.min.z[entityA] <= this.AABB.max.z[entityB] && 
+                         this.AABB.min.z[entityA] >= this.AABB.min.z[entityB]) || 
+                        (this.AABB.max.z[entityA] <= this.AABB.max.z[entityB] && 
+                         this.AABB.max.z[entityA] >= this.AABB.min.z[entityB]);
+        
+        return overlabX && overlabY && overlabZ;
     }
 
     testSystem(world: IWorld) {
@@ -241,12 +256,7 @@ export class ECSManager {
                 
                 if (this.IsStatic.value[eid1] && this.IsStatic.value[eid2]) continue;
                 
-                if (this.checkAABBOverlap(
-                    {min: {x: this.AABB.min.x[eid1], y: this.AABB.min.y[eid1], z: this.AABB.min.z[eid1]},
-                    max: {x: this.AABB.max.x[eid1], y: this.AABB.max.y[eid1], z: this.AABB.max.z[eid1]}},
-                    {min: {x: this.AABB.min.x[eid2], y: this.AABB.min.y[eid2], z: this.AABB.min.z[eid2]},
-                    max: {x: this.AABB.max.x[eid2], y: this.AABB.max.y[eid2], z: this.AABB.max.z[eid2]}}
-                )) {
+                if (this.checkAABBOverlap(eid1, eid2)) {
                     const m1 = this.Mass.value[eid1];
                     const m2 = this.Mass.value[eid2];
                     const I1 = this.MomentOfInertia.value[eid1];
@@ -326,6 +336,7 @@ export class ECSManager {
         this.collisionResponseSystem,
         this.moveSystem,
         this.syncSystem,
+        this.updateAABBSystem,
         this.testSystem
     );
 }
