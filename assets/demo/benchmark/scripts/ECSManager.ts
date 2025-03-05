@@ -38,7 +38,7 @@ export class ECSManager {
     IsStatic = defineComponent({value: Types.i8});
     BridgeInfo = defineComponent({value: Types.i16});
     AABB = defineComponent(this.VectorAABB);
-    CollionPair = defineComponent({entityA: Types.i16, entityB: Types.i16});
+    CollisionPair = defineComponent({entityA: Types.i16, entityB: Types.i16});
 
     MovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
     CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
@@ -194,9 +194,9 @@ export class ECSManager {
 
     private makeCollisionPair(entityA: number, entityB: number) {
         const eid = addEntity(this.world);
-        addComponent(this.world, this.CollionPair, eid);
-        this.CollionPair.entityA[eid] = entityA;
-        this.CollionPair.entityB[eid] = entityB;
+        addComponent(this.world, this.CollisionPair, eid);
+        this.CollisionPair.entityA[eid] = entityA;
+        this.CollisionPair.entityB[eid] = entityB;
     }
 
     private updateAABBSystem(world: IWorld) {
