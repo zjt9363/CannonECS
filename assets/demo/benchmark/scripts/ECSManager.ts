@@ -18,7 +18,7 @@ import {
 
 } from 'bitecs'
 
-import {Node} from 'cc';
+import {BoxCollider, Node, SphereCollider} from 'cc';
 
 const NodeMap = new Map<number, Node>();
 export class ECSManager {
@@ -33,9 +33,13 @@ export class ECSManager {
     WorldScale = defineComponent(this.Vector3);
     BridgeInfo = defineComponent({value: Types.i16});
     AABB = defineComponent(this.VectorAABB);
-    NodeId = 0;
+    CollionPair = defineComponent({entityA: Types.i16, entityB: Types.i16});
 
-    movementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
+    MovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
+    CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
+    UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]); // TODO: 完善AABB查询
+
+    NodeId = 0;
 
     constructor() {}
 
@@ -70,12 +74,93 @@ export class ECSManager {
 
     }
 
-    broadphaseCollisionSystem(world: IWorld) {
-
+    phaseCollisionDetectionSystem(world: IWorld) {
+        const entities = this.CollisionQuery(world);
+        for (let i = 0; i < entities.length; i++) {
+            const entityA = entities[i];
+            for (let j = i + 1; j < entities.length; j++) {
+                if (i === j) {
+                    continue;
+                }
+                const entityB = entities[j];
+                const aabb1 = {
+                    min: { x: this.AABB.min.x[entityA], y: this.AABB.min.y[entityA], z: this.AABB.min.z[entityA] },
+                    max: { x: this.AABB.max.x[entityA], y: this.AABB.max.y[entityA], z: this.AABB.max.z[entityA] }
+                };
+                const aabb2 = {
+                    min: { x: this.AABB.min.x[entityB], y: this.AABB.min.y[entityB], z: this.AABB.min.z[entityB] },
+                    max: { x: this.AABB.max.x[entityB], y: this.AABB.max.y[entityB], z: this.AABB.max.z[entityB] }
+                };
+                if (!this.checkAABBOverlap(aabb1, aabb2)) {
+                    continue;
+                }
+                if (this.narrowPhaseCollisionDetection(entityA, entityB)) {
+                    this.makeCollisionPair(entityA, entityB);
+                }
+            }
+        }
     }
 
-    narrowphaseCollisionSystem(world: IWorld) {
+    private narrowPhaseCollisionDetection(entityA: number, entityB: number): boolean {
+        if (this.isBox(entityA) && this.isBox(entityB)) {
+            return this.checkBoxBoxCollision(entityA, entityB);
+        } else if (!this.isBox(entityA) && !this.isBox(entityB)) {
+            return this.checkSphereSphereCollision(entityA, entityB);
+        } else {
+            return this.checkBoxSphereCollision(entityA, entityB);
+        }
+    }
 
+    private checkBoxBoxCollision(entityA: number, entityB: number): boolean {
+        // TODO: 检测两个box是否碰撞
+        return false;
+    }
+
+    private checkBoxSphereCollision(entityA: number, entityB: number): boolean {
+        // TODO: 检测box和sphere是否碰撞
+        return false;
+    }
+
+    private checkSphereSphereCollision(entityA: number, entityB: number): boolean {
+        // TODO: 检测两个sphere是否碰撞
+        return false;
+    }
+
+    private isBox(entity: number): boolean {
+        const node = NodeMap.get(this.BridgeInfo.value[entity]);
+        if (!node) {
+            console.error("Node not found");
+        }
+        return node?.getComponent(BoxCollider) !== null;
+    }
+
+
+
+    private makeCollisionPair(entityA: number, entityB: number) {
+        const eid = addEntity(this.world);
+        addComponent(this.world, this.CollionPair, eid);
+        this.CollionPair.entityA[eid] = entityA;
+        this.CollionPair.entityB[eid] = entityB;
+    }
+
+    private updateAABBSystem(world: IWorld) {
+        const entities = this.UpDateAAPPQuery(world);
+        for (let i = 0; i < entities.length; i++) {
+            const entity = entities[i];
+            if (this.isBox(entity)) {
+                this.calculateBoxAABB(entity);
+            } else {
+                this.calculateSphereAABB(entity);
+            }
+        }
+    }
+
+    private calculateBoxAABB(entity: number) {
+        // TODO: 计算AABB
+    }
+
+    private calculateSphereAABB(entity: number) {
+        // TODO: 计算AABB
     }
 
     private checkAABBOverlap(aabb1: any, aabb2: any): boolean {
@@ -85,9 +170,9 @@ export class ECSManager {
     }
 
     testSystem(world: IWorld) {
-        console.info("zjt!!!")
+        console.info("ECS Tick!!!")
     }
     
-    pipeline = pipe(this.broadphaseCollisionSystem, this.narrowphaseCollisionSystem, this.moveSystem, this.testSystem);
+    pipeline = pipe(this.phaseCollisionDetectionSystem, this.moveSystem, this.updateAABBSystem, this.testSystem);
 }
 
