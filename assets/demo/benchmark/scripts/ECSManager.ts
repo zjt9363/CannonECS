@@ -32,6 +32,9 @@ const StatusEnum = {
 export class ECSManager {
     world: IWorld = createWorld();
 
+    // 添加重力常数
+    gravityConstant = -9.8; // 重力加速度，向下为负方向
+
     Vector3 = {x: Types.f32, y: Types.f32, z: Types.f32};
     Vector4 = {x: Types.f32, y: Types.f32, z: Types.f32, w: Types.f32};
     VectorAABB = {min: this.Vector3, max: this.Vector3};
@@ -78,6 +81,7 @@ export class ECSManager {
         this.updateAABBSystem();
         this.phaseCollisionDetectionSystem();
         this.collisionResponseSystem();
+        this.gravitySystem();
         this.moveSystem();
         this.syncSystem();
         this.testSystem();
@@ -125,14 +129,14 @@ export class ECSManager {
         this.BitStatus.value[eid] = status;
 
         addComponent(this.world, this.Velocity, eid);
-        this.Velocity.x[eid] = isStatic ? 0 : 1.0;
-        this.Velocity.y[eid] = isStatic ? 0 : 0.5;
-        this.Velocity.z[eid] = isStatic ? 0 : 0.3;
+        this.Velocity.x[eid] = 0;
+        this.Velocity.y[eid] = 0;
+        this.Velocity.z[eid] = 0;
 
         addComponent(this.world, this.AngularVelocity, eid);
-        this.AngularVelocity.x[eid] = isStatic ? 0 : 0.1;
-        this.AngularVelocity.y[eid] = isStatic ? 0 : 0.2;
-        this.AngularVelocity.z[eid] = isStatic ? 0 : 0.15;
+        this.AngularVelocity.x[eid] = 0;
+        this.AngularVelocity.y[eid] = 0;
+        this.AngularVelocity.z[eid] = 0;
 
         addComponent(this.world, this.Mass, eid);
         this.Mass.value[eid] = isStatic ? 1000000.0 : 10.0;
@@ -149,6 +153,11 @@ export class ECSManager {
 
         addComponent(this.world, this.AABB, eid);
         
+        // 添加力组件并初始化为0
+        addComponent(this.world, this.Force, eid);
+        this.Force.x[eid] = 0;
+        this.Force.y[eid] = 0;
+        this.Force.z[eid] = 0;
 
         NodeMap.set(this.NodeId++, node);
     }
@@ -174,6 +183,21 @@ export class ECSManager {
                 this.WorldRotation.x[eid] += this.AngularVelocity.x[eid] * deltaTime;
                 this.WorldRotation.y[eid] += this.AngularVelocity.y[eid] * deltaTime;
                 this.WorldRotation.z[eid] += this.AngularVelocity.z[eid] * deltaTime;
+                
+                // 归一化四元数，防止旋转累加导致四元数变大
+                const length = Math.sqrt(
+                    this.WorldRotation.x[eid] * this.WorldRotation.x[eid] +
+                    this.WorldRotation.y[eid] * this.WorldRotation.y[eid] +
+                    this.WorldRotation.z[eid] * this.WorldRotation.z[eid] +
+                    this.WorldRotation.w[eid] * this.WorldRotation.w[eid]
+                );
+                
+                if (length > 0.0001) {
+                    this.WorldRotation.x[eid] /= length;
+                    this.WorldRotation.y[eid] /= length;
+                    this.WorldRotation.z[eid] /= length;
+                    this.WorldRotation.w[eid] /= length;
+                }
             }
         } catch (error) {
             console.error("Error in moveSystem:", error);
@@ -191,6 +215,9 @@ export class ECSManager {
                 if (node) {
                     node.setPosition(this.WorldPosition.x[eid], this.WorldPosition.y[eid], this.WorldPosition.z[eid]);
                     node.setRotation(this.WorldRotation.x[eid], this.WorldRotation.y[eid], this.WorldRotation.z[eid], this.WorldRotation.w[eid]);
+                    
+                    // 添加缩放同步
+                    node.setScale(this.WorldScale.x[eid], this.WorldScale.y[eid], this.WorldScale.z[eid]);
                 }
             }
         } catch (error) {
@@ -688,6 +715,41 @@ export class ECSManager {
         return halfExtents.x * Math.abs(this.dot(axes[0], axis)) +
                halfExtents.y * Math.abs(this.dot(axes[1], axis)) +
                halfExtents.z * Math.abs(this.dot(axes[2], axis));
+    }
+
+    // 重力系统 - 对所有非静态物体施加恒定重力
+    gravitySystem() {
+        try {
+            const entities = this.MovementQuery(this.world);
+            const deltaTime = game.deltaTime;
+            
+            for (let i = 0; i < entities.length; i++) {
+                const eid = entities[i];
+                // 跳过静态物体
+                if (this.BitStatus.value[eid] & StatusEnum.STATIC) {
+                    continue;
+                }
+                
+                // 为Y轴速度应用重力加速度
+                this.Velocity.y[eid] += this.gravityConstant * deltaTime;
+
+                // 应用Force组件中的力
+                if (hasComponent(this.world, this.Force, eid)) {
+                    const mass = this.Mass.value[eid];
+                    // F = ma, a = F/m
+                    this.Velocity.x[eid] += (this.Force.x[eid] / mass) * deltaTime;
+                    this.Velocity.y[eid] += (this.Force.y[eid] / mass) * deltaTime;
+                    this.Velocity.z[eid] += (this.Force.z[eid] / mass) * deltaTime;
+                    
+                    // 应用力后重置Force组件，除非需要持续应用力
+                    this.Force.x[eid] = 0;
+                    this.Force.y[eid] = 0;
+                    this.Force.z[eid] = 0;
+                }
+            }
+        } catch (error) {
+            console.error("Error in gravitySystem:", error);
+        }
     }
 }
 
