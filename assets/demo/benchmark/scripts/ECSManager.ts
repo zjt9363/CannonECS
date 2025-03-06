@@ -49,6 +49,7 @@ export class ECSManager {
     CollisionPair = defineComponent({entityA: Types.eid, entityB: Types.eid});
     ShapeSize = defineComponent({x: Types.f32, y: Types.f32, z: Types.f32, radius: Types.f32});
     BitStatus = defineComponent({value: Types.i16});
+    Force = defineComponent(this.Vector3);
     /**
      * 状态位：
      * 0: dirty
@@ -86,10 +87,11 @@ export class ECSManager {
         
         // Initialize pipeline that doesn't take a world parameter
         this.pipeline = () => {
+            this.updateAABBSystem();
             this.phaseCollisionDetectionSystem();
+            this.collisionResponseSystem();
             this.moveSystem();
             this.syncSystem();
-            this.updateAABBSystem();
             this.testSystem();
         };
     }
@@ -140,7 +142,7 @@ export class ECSManager {
         this.AngularVelocity.z[eid] = isStatic ? 0 : 0.15;
 
         addComponent(this.world, this.Mass, eid);
-        this.Mass.value[eid] = isStatic ? 1000000.0 : 1.0;
+        this.Mass.value[eid] = isStatic ? 1000000.0 : 10.0;
 
         addComponent(this.world, this.MomentOfInertia, eid);
         const radius = 1.0;
@@ -159,8 +161,6 @@ export class ECSManager {
     }
 
     moveSystem() {
-        console.log("moveSystem called, using this.world");
-        
         try {
             // Use the class's world property directly
             const entities = this.DynamicMovementQuery(this.world);
@@ -554,11 +554,11 @@ export class ECSManager {
     }
 
     testSystem() {
-        console.info("ECS Tick!!!");
+        console.info("ECS Tick!!!!");
     }
     
-    collisionResponseSystem(world: IWorld) {
-        const entities = this.responseQuery(world);
+    collisionResponseSystem() {
+        const entities = this.responseQuery(this.world);
         const deltaTime = game.deltaTime;
 
         for (let i = 0; i < entities.length; i++) {
