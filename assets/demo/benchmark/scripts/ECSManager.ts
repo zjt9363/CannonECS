@@ -26,7 +26,7 @@ const StatusEnum = {
     BOX: 1 << 1,      // 2
     SPHERE: 1 << 2,   // 4
     STATIC: 1 << 3,
-    SHAPE_BIT: (1 << 1) | (1 << 2)  // 6
+    SHAPE_BITS: (1 << 1) | (1 << 2)  // 6
 }
 
 export class ECSManager {
@@ -213,17 +213,11 @@ export class ECSManager {
                     const entityB = entities[j];
                     if (!this.checkAABBOverlap(entityA, entityB)) continue;
 
-                    // 计算碰撞类型
-                    const typeA = this.BitStatus.value[entityA] & StatusEnum.SHAPE_BIT;
-                    const typeB = this.BitStatus.value[entityB] & StatusEnum.SHAPE_BIT;
-                    const collisionType = typeA | typeB;
 
-                    // 确保有对应的处理函数
-                    if (this.narrowPhaseCollision[collisionType]) {
-                        if (this.narrowPhaseCollision[collisionType](entityA, entityB)) {
-                            this.makeCollisionPair(entityA, entityB);
-                        }
+                    if (this.narrowPhaseCollision[(this.BitStatus.value[entityA] | this.BitStatus.value[entityB]) & StatusEnum.SHAPE_BITS](entityA, entityB)) {
+                        this.makeCollisionPair(entityA, entityB);
                     }
+
                 }
             }
         } catch (error) {
@@ -442,7 +436,7 @@ export class ECSManager {
             const entities = this.UpDateAAPPQuery(this.world);
             for (let i = 0; i < entities.length; i++) {
                 const entity = entities[i];
-                this.updateAABB[this.BitStatus.value[entity] | StatusEnum.SPHERE](entity);
+                this.updateAABB[this.BitStatus.value[entity] & StatusEnum.SHAPE_BITS](entity);
             }
         } catch (error) {
             console.error("Error in updateAABBSystem:", error);
