@@ -18,7 +18,7 @@ import {
 
 } from 'bitecs'
 
-import {BoxCollider, Node, game, SphereCollider} from 'cc';
+import {BoxCollider, Node, game, SphereCollider, director} from 'cc';
 
 const NodeMap = new Map<number, Node>();
 const StatusEnum = {
@@ -80,17 +80,50 @@ export class ECSManager {
     pipeline = () => {
         this.updateAABBSystem();
         this.phaseCollisionDetectionSystem();
-        this.collisionResponseSystem();
+        // this.collisionResponseSystem();
         this.gravitySystem();
         this.moveSystem();
         this.syncSystem();
-        this.testSystem();
+        // this.testSystem();
     };
     NodeId = 0;
 
     constructor() {
-        
+    }
 
+    // 添加一个初始化方法，需要在场景加载完成后调用
+    init() {
+        this.createWalls();
+        this.updateAABBSystem();
+        return this;
+    }
+
+    createWalls() {
+        // 获取场景中的Walls节点
+        const scene = director.getScene();
+        if (!scene) {
+            console.error('Scene not found');
+            return;
+        }
+
+        // 查找Walls节点
+        const wallsNode = scene.getChildByName('Walls');
+        if (!wallsNode) {
+            console.error('Walls node not found in scene');
+            return;
+        }
+
+        // 为Walls的所有子节点创建静态实体
+        const children = wallsNode.children;
+        console.log(`Found ${children.length} walls in the scene:`, children.map(n => n.name).join(', '));
+        
+        // 遍历所有墙体节点并创建静态实体
+        children.forEach((wallNode: Node) => {
+            console.log(`Creating static entity for wall: ${wallNode.name} at position: ${wallNode.position.toString()}`);
+            this.addEntity(wallNode, true); // true表示这是一个静态实体
+        });
+        
+        console.log("All wall entities created successfully.");
     }
 
     addEntity(node: Node, isStatic: boolean = false) {
@@ -237,9 +270,9 @@ export class ECSManager {
                     if (!this.checkAABBOverlap(entityA, entityB)) continue;
 
 
-                    if (this.narrowPhaseCollision[(this.BitStatus.value[entityA] | this.BitStatus.value[entityB]) & StatusEnum.SHAPE_BITS](entityA, entityB)) {
-                        this.makeCollisionPair(entityA, entityB);
-                    }
+                    // if (this.narrowPhaseCollision[(this.BitStatus.value[entityA] | this.BitStatus.value[entityB]) & StatusEnum.SHAPE_BITS](entityA, entityB)) {
+                        // this.makeCollisionPair(entityA, entityB);
+                    // }
 
                 }
             }
@@ -457,9 +490,16 @@ export class ECSManager {
     private updateAABBSystem() {
         try {
             const entities = this.UpDateAAPPQuery(this.world);
+            // console.log(`！！！Updating AABB for ${entities.length} entities`);
             for (let i = 0; i < entities.length; i++) {
                 const entity = entities[i];
-                this.updateAABB[this.BitStatus.value[entity] & StatusEnum.SHAPE_BITS](entity);
+                const type = this.BitStatus.value[entity] & StatusEnum.SHAPE_BITS;
+                const isStatic = (this.BitStatus.value[entity] & StatusEnum.STATIC) !== 0;
+                // console.log(`Updating AABB for entity ${entity}, type: ${type === StatusEnum.BOX ? 'Box' : 'Sphere'}, static: ${isStatic}`);
+                this.updateAABB[type](entity);
+                
+                // 输出更新后的AABB信息
+                // console.log(`AABB updated: min(${this.AABB.min.x[entity]}, ${this.AABB.min.y[entity]}, ${this.AABB.min.z[entity]}) max(${this.AABB.max.x[entity]}, ${this.AABB.max.y[entity]}, ${this.AABB.max.z[entity]})`);
             }
         } catch (error) {
             console.error("Error in updateAABBSystem:", error);
