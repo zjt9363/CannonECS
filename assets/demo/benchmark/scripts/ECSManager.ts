@@ -272,14 +272,15 @@ export class ECSManager {
 
             return true;
         },
+
         [StatusEnum.SPHERE | StatusEnum.BOX]: (entityA: number, entityB: number) => {
+            // 确保 entityA 是球体，entityB 是盒子
             if (this.BitStatus.value[entityA] & StatusEnum.BOX) {
                 [entityA, entityB] = [entityB, entityA];
             }
 
             const sphereRadius = this.ShapeSize.radius[entityA];
-            const axisMap = ['x', 'y', 'z'] as const;
-            const boxHalfExtents: Record<typeof axisMap[number], number> = {
+            const boxHalfExtents = {
                 x: this.ShapeSize.x[entityB] * 0.5,
                 y: this.ShapeSize.y[entityB] * 0.5,
                 z: this.ShapeSize.z[entityB] * 0.5
@@ -306,76 +307,42 @@ export class ECSManager {
                 w: this.WorldRotation.w[entityB]
             };
 
-            // 1. 获取盒子的三个面法线
+            // 1. 计算球心到盒子中心的向量
+            const box_to_sphere = {
+                x: spherePos.x - boxPos.x,
+                y: spherePos.y - boxPos.y,
+                z: spherePos.z - boxPos.z
+            };
+
+            // 2. 获取盒子的局部坐标轴
             const sides = [
-                { x: 1, y: 0, z: 0 },
-                { x: 0, y: 1, z: 0 },
-                { x: 0, y: 0, z: 1 }
-            ].map(n => this.rotateByQuat(n, boxQuat));
+                this.rotateByQuat({x: 1, y: 0, z: 0}, boxQuat),
+                this.rotateByQuat({x: 0, y: 1, z: 0}, boxQuat),
+                this.rotateByQuat({x: 0, y: 0, z: 1}, boxQuat)
+            ];
 
-            // 2. 检查球体与盒子面的碰撞
-            for (let i = 0; i < 3; i++) {
-                const ns = sides[i];
-                const h = boxHalfExtents[axisMap[i]];
-                
-                // 计算球心到盒子的向量
-                const box_to_sphere = {
-                    x: spherePos.x - boxPos.x,
-                    y: spherePos.y - boxPos.y,
-                    z: spherePos.z - boxPos.z
-                };
+            // 3. 将球心位置转换到盒子的局部空间
+            const localPoint = {
+                x: this.dot(box_to_sphere, sides[0]),
+                y: this.dot(box_to_sphere, sides[1]),
+                z: this.dot(box_to_sphere, sides[2])
+            };
 
-                // 点积
-                const dot = this.dot(box_to_sphere, ns);
+            // 4. 计算局部空间中最近点（将点限制在盒子范围内）
+            const closestPoint = {
+                x: Math.max(-boxHalfExtents.x, Math.min(boxHalfExtents.x, localPoint.x)),
+                y: Math.max(-boxHalfExtents.y, Math.min(boxHalfExtents.y, localPoint.y)),
+                z: Math.max(-boxHalfExtents.z, Math.min(boxHalfExtents.z, localPoint.z))
+            };
 
-                if (dot < h + sphereRadius && dot > 0) {
-                    // 检查另外两个维度
-                    const ns1 = sides[(i + 1) % 3];
-                    const ns2 = sides[(i + 2) % 3];
-                    const h1 = boxHalfExtents[i === 0 ? 'y' : i === 1 ? 'z' : 'x'];
-                    const h2 = boxHalfExtents[i === 0 ? 'z' : i === 1 ? 'x' : 'y'];
+            // 5. 计算最近点到球心的距离
+            const dx = localPoint.x - closestPoint.x;
+            const dy = localPoint.y - closestPoint.y;
+            const dz = localPoint.z - closestPoint.z;
+            const distanceSquared = dx * dx + dy * dy + dz * dz;
 
-                    const dot1 = this.dot(box_to_sphere, ns1);
-                    const dot2 = this.dot(box_to_sphere, ns2);
-
-                    if (dot1 < h1 && dot1 > -h1 && dot2 < h2 && dot2 > -h2) {
-                        return true;
-                    }
-                }
-            }
-
-            // 3. 检查球体与盒子顶点的碰撞
-            for (let i = 0; i < 2; i++) {
-                for (let j = 0; j < 2; j++) {
-                    for (let k = 0; k < 2; k++) {
-                        const corner = {
-                            x: i ? boxHalfExtents.x : -boxHalfExtents.x,
-                            y: j ? boxHalfExtents.y : -boxHalfExtents.y,
-                            z: k ? boxHalfExtents.z : -boxHalfExtents.z
-                        };
-
-                        // 将顶点转换到世界坐标
-                        const rotatedCorner = this.rotateByQuat(corner, boxQuat);
-                        const worldCorner = {
-                            x: rotatedCorner.x + boxPos.x,
-                            y: rotatedCorner.y + boxPos.y,
-                            z: rotatedCorner.z + boxPos.z
-                        };
-
-                        // 计算球心到顶点的距离平方
-                        const dx = worldCorner.x - spherePos.x;
-                        const dy = worldCorner.y - spherePos.y;
-                        const dz = worldCorner.z - spherePos.z;
-                        const distSquared = dx * dx + dy * dy + dz * dz;
-
-                        if (distSquared < sphereRadius * sphereRadius) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            // 6. 如果距离小于球体半径，则发生碰撞
+            return distanceSquared <= sphereRadius * sphereRadius;
         },
         [StatusEnum.SPHERE]: (entityA: number, entityB: number) => {
             const dx = this.WorldPosition.x[entityA] - this.WorldPosition.x[entityB];
@@ -432,7 +399,7 @@ export class ECSManager {
             };
 
             const pos = {
-                x: this.WorldPosition.x[entity],
+                x: this.WorldPosition.x[entity], 
                 y: this.WorldPosition.y[entity],
                 z: this.WorldPosition.z[entity]
             };
