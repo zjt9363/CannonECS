@@ -145,7 +145,11 @@ export class Benchmark extends Component {
         // else
         //     this.rotateDynamics.setAngularVelocity(Vec3.ZERO as Vec3);
 
-        this.ECSManager.pipeline(this.ECSManager.world) // TODO: 测试ECS
+        // Make sure world exists before calling pipeline
+        if (this.ECSManager) {
+            // Don't pass world through pipeline - let ECSManager use its own world
+            this.ECSManager.pipeline();
+        }
     }
 
     onDestroy() {

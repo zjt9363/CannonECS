@@ -56,25 +56,43 @@ export class ECSManager {
      * 2: sphere
      */
 
-    MovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
-    CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
-    UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]); // TODO: 完善AABB查询
-    movementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale, this.Velocity, this.AngularVelocity, Not(this.IsStatic)]);
-    syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
-    responseQuery = defineQuery([
-        this.WorldPosition,    // 需要位置来应用位置修正
-        this.WorldRotation,    // 需要旋转来应用角速度
-        this.Velocity,        // 需要速度来计算和应用冲量
-        this.AngularVelocity, // 需要角速度来处理旋转响应
-        this.Mass,           // 需要质量来计算冲量
-        this.MomentOfInertia, // 需要转动惯量来计算角速度变化
-        this.BitStatus,      // 需要状态来判断形状类型
-        this.ShapeSize       // 需要尺寸来计算碰撞响应
-    ]);
+    CollisionQuery;
+    UpDateAAPPQuery;
+    DynamicMovementQuery;
+    syncQuery;
+    responseQuery;
+    pipeline;
 
     NodeId = 0;
 
-    constructor() {}
+    constructor() {
+        console.log("ECSManager constructor called, world:", this.world);
+        
+        // Initialize queries with the world context
+        this.CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
+        this.UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
+        this.DynamicMovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale, this.Velocity, this.AngularVelocity, Not(this.IsStatic)]);
+        this.syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
+        this.responseQuery = defineQuery([
+            this.WorldPosition,
+            this.WorldRotation,
+            this.Velocity,
+            this.AngularVelocity,
+            this.Mass,
+            this.MomentOfInertia,
+            this.BitStatus,
+            this.ShapeSize
+        ]);
+        
+        // Initialize pipeline that doesn't take a world parameter
+        this.pipeline = () => {
+            this.phaseCollisionDetectionSystem();
+            this.moveSystem();
+            this.syncSystem();
+            this.updateAABBSystem();
+            this.testSystem();
+        };
+    }
 
     addEntity(node: Node, isStatic: boolean = false) {
         const eid = addEntity(this.world);
@@ -97,7 +115,7 @@ export class ECSManager {
         addComponent(this.world, this.BitStatus, eid);
         addComponent(this.world, this.ShapeSize, eid);
         let status = StatusEnum.DIRTY;
-        if (node.name == "Box-RB" || "Box") {
+        if (node.name === "Box-RB" || node.name === "Box") {
             status |= StatusEnum.BOX;
             this.ShapeSize.x[eid] = node.getComponent(BoxCollider)?.size.x ?? 0;
             this.ShapeSize.y[eid] = node.getComponent(BoxCollider)?.size.y ?? 0;
@@ -140,59 +158,76 @@ export class ECSManager {
         NodeMap.set(this.NodeId++, node);
     }
 
-    moveSystem(world: IWorld) {
-        const entities = this.movementQuery(world);
-        const deltaTime = game.deltaTime;
+    moveSystem() {
+        console.log("moveSystem called, using this.world");
+        
+        try {
+            // Use the class's world property directly
+            const entities = this.DynamicMovementQuery(this.world);
+            const deltaTime = game.deltaTime;
 
-        for (let i = 0; i < entities.length; i++) {
-            const eid = entities[i];
+            console.log(`Found ${entities.length} entities for movement`);
             
-            this.WorldPosition.x[eid] += this.Velocity.x[eid] * deltaTime;
-            this.WorldPosition.y[eid] += this.Velocity.y[eid] * deltaTime;
-            this.WorldPosition.z[eid] += this.Velocity.z[eid] * deltaTime;
-
-            this.WorldRotation.x[eid] += this.AngularVelocity.x[eid] * deltaTime;
-            this.WorldRotation.y[eid] += this.AngularVelocity.y[eid] * deltaTime;
-            this.WorldRotation.z[eid] += this.AngularVelocity.z[eid] * deltaTime;
-        }
-    }
-
-    syncSystem(world: IWorld) {
-        const entities = this.syncQuery(world);
-
-        for (let i = 0; i < entities.length; i++) {
-            const eid = entities[i];
-            
-            const node = NodeMap.get(this.BridgeInfo.value[eid]);
-            if (node) {
-                node.setPosition(this.WorldPosition.x[eid], this.WorldPosition.y[eid], this.WorldPosition.z[eid]);
-                node.setRotation(this.WorldRotation.x[eid], this.WorldRotation.y[eid], this.WorldRotation.z[eid], this.WorldRotation.w[eid]);
-            }
-        }
-    }
-
-    phaseCollisionDetectionSystem(world: IWorld) {
-        const entities = this.CollisionQuery(world);
-        for (let i = 0; i < entities.length; i++) {
-            const entityA = entities[i];
-            for (let j = i + 1; j < entities.length; j++) {
-                if (i === j) continue;
+            for (let i = 0; i < entities.length; i++) {
+                const eid = entities[i];
                 
-                const entityB = entities[j];
-                if (!this.checkAABBOverlap(entityA, entityB)) continue;
+                this.WorldPosition.x[eid] += this.Velocity.x[eid] * deltaTime;
+                this.WorldPosition.y[eid] += this.Velocity.y[eid] * deltaTime;
+                this.WorldPosition.z[eid] += this.Velocity.z[eid] * deltaTime;
 
-                // 计算碰撞类型
-                const typeA = this.BitStatus.value[entityA] & StatusEnum.SHAPE_BIT;
-                const typeB = this.BitStatus.value[entityB] & StatusEnum.SHAPE_BIT;
-                const collisionType = typeA | typeB;
+                this.WorldRotation.x[eid] += this.AngularVelocity.x[eid] * deltaTime;
+                this.WorldRotation.y[eid] += this.AngularVelocity.y[eid] * deltaTime;
+                this.WorldRotation.z[eid] += this.AngularVelocity.z[eid] * deltaTime;
+            }
+        } catch (error) {
+            console.error("Error in moveSystem:", error);
+        }
+    }
 
-                // 确保有对应的处理函数
-                if (this.narrowPhaseCollision[collisionType]) {
-                    if (this.narrowPhaseCollision[collisionType](entityA, entityB)) {
-                        this.makeCollisionPair(entityA, entityB);
+    syncSystem() {
+        try {
+            const entities = this.syncQuery(this.world);
+
+            for (let i = 0; i < entities.length; i++) {
+                const eid = entities[i];
+                
+                const node = NodeMap.get(this.BridgeInfo.value[eid]);
+                if (node) {
+                    node.setPosition(this.WorldPosition.x[eid], this.WorldPosition.y[eid], this.WorldPosition.z[eid]);
+                    node.setRotation(this.WorldRotation.x[eid], this.WorldRotation.y[eid], this.WorldRotation.z[eid], this.WorldRotation.w[eid]);
+                }
+            }
+        } catch (error) {
+            console.error("Error in syncSystem:", error);
+        }
+    }
+
+    phaseCollisionDetectionSystem() {
+        try {
+            const entities = this.CollisionQuery(this.world);
+            for (let i = 0; i < entities.length; i++) {
+                const entityA = entities[i];
+                for (let j = i + 1; j < entities.length; j++) {
+                    if (i === j) continue;
+                    
+                    const entityB = entities[j];
+                    if (!this.checkAABBOverlap(entityA, entityB)) continue;
+
+                    // 计算碰撞类型
+                    const typeA = this.BitStatus.value[entityA] & StatusEnum.SHAPE_BIT;
+                    const typeB = this.BitStatus.value[entityB] & StatusEnum.SHAPE_BIT;
+                    const collisionType = typeA | typeB;
+
+                    // 确保有对应的处理函数
+                    if (this.narrowPhaseCollision[collisionType]) {
+                        if (this.narrowPhaseCollision[collisionType](entityA, entityB)) {
+                            this.makeCollisionPair(entityA, entityB);
+                        }
                     }
                 }
             }
+        } catch (error) {
+            console.error("Error in phaseCollisionDetectionSystem:", error);
         }
     }
 
@@ -402,11 +437,15 @@ export class ECSManager {
         this.CollisionPair.entityB[eid] = entityB;
     }
 
-    private updateAABBSystem(world: IWorld) {
-        const entities = this.UpDateAAPPQuery(world);
-        for (let i = 0; i < entities.length; i++) {
-            const entity = entities[i];
-            this.updateAABB[this.BitStatus.value[entity] | StatusEnum.SPHERE](entity);
+    private updateAABBSystem() {
+        try {
+            const entities = this.UpDateAAPPQuery(this.world);
+            for (let i = 0; i < entities.length; i++) {
+                const entity = entities[i];
+                this.updateAABB[this.BitStatus.value[entity] | StatusEnum.SPHERE](entity);
+            }
+        } catch (error) {
+            console.error("Error in updateAABBSystem:", error);
         }
     }
 
@@ -520,8 +559,8 @@ export class ECSManager {
         return overlabX && overlabY && overlabZ;
     }
 
-    testSystem(world: IWorld) {
-        console.info("ECS Tick!!!")
+    testSystem() {
+        console.info("ECS Tick!!!");
     }
     
     collisionResponseSystem(world: IWorld) {
@@ -660,14 +699,5 @@ export class ECSManager {
                halfExtents.y * Math.abs(this.dot(axes[1], axis)) +
                halfExtents.z * Math.abs(this.dot(axes[2], axis));
     }
-
-    pipeline = pipe(
-        (world: IWorld) => this.phaseCollisionDetectionSystem(world),
-        //(world: IWorld) => this.collisionResponseSystem(world),
-        (world: IWorld) => this.moveSystem(world),
-        (world: IWorld) => this.syncSystem(world),
-        (world: IWorld) => this.updateAABBSystem(world),
-        (world: IWorld) => this.testSystem(world)
-    );
 }
 
