@@ -57,43 +57,36 @@ export class ECSManager {
      * 2: sphere
      */
 
-    CollisionQuery;
-    UpDateAAPPQuery;
-    DynamicMovementQuery;
-    syncQuery;
-    responseQuery;
-    pipeline;
-
-    NodeId = 0;
-
-    constructor() {
-        console.log("ECSManager constructor called, world:", this.world);
-        
         // Initialize queries with the world context
-        this.CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
-        this.UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
-        this.DynamicMovementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale, this.Velocity, this.AngularVelocity, Not(this.IsStatic)]);
-        this.syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
-        this.responseQuery = defineQuery([
-            this.WorldPosition,
-            this.WorldRotation,
-            this.Velocity,
-            this.AngularVelocity,
-            this.Mass,
-            this.MomentOfInertia,
-            this.BitStatus,
-            this.ShapeSize
+    CollisionQuery = defineQuery([this.AABB, this.WorldPosition]);
+    UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]);
+    MovementQuery = defineQuery([this.WorldPosition]);
+    syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
+    responseQuery = defineQuery([
+        this.WorldPosition,
+        this.WorldRotation,
+        this.Velocity,
+        this.AngularVelocity,
+        this.Mass,
+        this.MomentOfInertia,
+        this.BitStatus,
+        this.ShapeSize
         ]);
         
         // Initialize pipeline that doesn't take a world parameter
-        this.pipeline = () => {
-            this.updateAABBSystem();
-            this.phaseCollisionDetectionSystem();
-            this.collisionResponseSystem();
-            this.moveSystem();
-            this.syncSystem();
-            this.testSystem();
-        };
+    pipeline = () => {
+        this.updateAABBSystem();
+        this.phaseCollisionDetectionSystem();
+        this.collisionResponseSystem();
+        this.moveSystem();
+        this.syncSystem();
+        this.testSystem();
+    };
+    NodeId = 0;
+
+    constructor() {
+        
+
     }
 
     addEntity(node: Node, isStatic: boolean = false) {
@@ -163,13 +156,16 @@ export class ECSManager {
     moveSystem() {
         try {
             // Use the class's world property directly
-            const entities = this.DynamicMovementQuery(this.world);
+            const entities = this.MovementQuery(this.world);
             const deltaTime = game.deltaTime;
 
             console.log(`Found ${entities.length} entities for movement`);
             
             for (let i = 0; i < entities.length; i++) {
                 const eid = entities[i];
+                if (this.BitStatus.value[eid] & StatusEnum.STATIC) {
+                    continue;
+                }
                 
                 this.WorldPosition.x[eid] += this.Velocity.x[eid] * deltaTime;
                 this.WorldPosition.y[eid] += this.Velocity.y[eid] * deltaTime;
