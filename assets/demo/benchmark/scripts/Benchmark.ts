@@ -71,8 +71,8 @@ export class Benchmark extends Component {
     @property({ type: EditBox })
     readonly r_IntervalEditBox: EditBox = null!;
 
-    // @property({ type: RigidBodyComponent })
-    // readonly rotateDynamics: RigidBodyComponent = null!;
+    @property({ type: RigidBodyComponent })
+    readonly rotateDynamics: RigidBodyComponent = null!;
 
     private initBoxCount: number = 0;
     private initSphereCount: number = 0;

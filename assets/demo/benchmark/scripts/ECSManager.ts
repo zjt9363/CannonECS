@@ -22,10 +22,11 @@ import {BoxCollider, Node, game, SphereCollider} from 'cc';
 
 const NodeMap = new Map<number, Node>();
 const StatusEnum = {
-    DIRTY: 1 << 0,
-    BOX: 1 << 1,
-    SPHERE: 1 << 2,
-    SHAPE_BIT: 1 << 1 | 1 << 2,
+    DIRTY: 1 << 0,    // 1
+    BOX: 1 << 1,      // 2
+    SPHERE: 1 << 2,   // 4
+    STATIC: 1 << 3,
+    SHAPE_BIT: (1 << 1) | (1 << 2)  // 6
 }
 
 export class ECSManager {
@@ -60,7 +61,16 @@ export class ECSManager {
     UpDateAAPPQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale]); // TODO: 完善AABB查询
     movementQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.WorldScale, this.Velocity, this.AngularVelocity, Not(this.IsStatic)]);
     syncQuery = defineQuery([this.WorldPosition, this.WorldRotation, this.BridgeInfo]);
-    collisionQuery = defineQuery([this.WorldPosition, this.Velocity, this.AngularVelocity, this.AABB, this.Mass, this.MomentOfInertia]);
+    responseQuery = defineQuery([
+        this.WorldPosition,    // 需要位置来应用位置修正
+        this.WorldRotation,    // 需要旋转来应用角速度
+        this.Velocity,        // 需要速度来计算和应用冲量
+        this.AngularVelocity, // 需要角速度来处理旋转响应
+        this.Mass,           // 需要质量来计算冲量
+        this.MomentOfInertia, // 需要转动惯量来计算角速度变化
+        this.BitStatus,      // 需要状态来判断形状类型
+        this.ShapeSize       // 需要尺寸来计算碰撞响应
+    ]);
 
     NodeId = 0;
 
@@ -86,15 +96,20 @@ export class ECSManager {
 
         addComponent(this.world, this.BitStatus, eid);
         addComponent(this.world, this.ShapeSize, eid);
+        let status = StatusEnum.DIRTY;
         if (node.name == "Box-RB" || "Box") {
-            this.BitStatus.value[eid] = StatusEnum.BOX | StatusEnum.DIRTY;
+            status |= StatusEnum.BOX;
             this.ShapeSize.x[eid] = node.getComponent(BoxCollider)?.size.x ?? 0;
             this.ShapeSize.y[eid] = node.getComponent(BoxCollider)?.size.y ?? 0;
             this.ShapeSize.z[eid] = node.getComponent(BoxCollider)?.size.z ?? 0;
         } else {
-            this.BitStatus.value[eid] = StatusEnum.SPHERE | StatusEnum.DIRTY;
+            status |= StatusEnum.SPHERE;
             this.ShapeSize.radius[eid] = node.getComponent(SphereCollider)?.radius ?? 0;
         }
+        if (isStatic) {
+            status |= StatusEnum.STATIC;
+        }
+        this.BitStatus.value[eid] = status;
 
         addComponent(this.world, this.Velocity, eid);
         this.Velocity.x[eid] = isStatic ? 0 : 1.0;
@@ -161,15 +176,21 @@ export class ECSManager {
         for (let i = 0; i < entities.length; i++) {
             const entityA = entities[i];
             for (let j = i + 1; j < entities.length; j++) {
-                if (i === j) {
-                    continue;
-                }
+                if (i === j) continue;
+                
                 const entityB = entities[j];
-                if (!this.checkAABBOverlap(entityA, entityB)) {
-                    continue;
-                }
-                if (this.narrowPhaseCollision[this.BitStatus.value[entityA] | this.BitStatus.value[entityB] | StatusEnum.SHAPE_BIT](entityA, entityB)) {
-                    this.makeCollisionPair(entityA, entityB);
+                if (!this.checkAABBOverlap(entityA, entityB)) continue;
+
+                // 计算碰撞类型
+                const typeA = this.BitStatus.value[entityA] & StatusEnum.SHAPE_BIT;
+                const typeB = this.BitStatus.value[entityB] & StatusEnum.SHAPE_BIT;
+                const collisionType = typeA | typeB;
+
+                // 确保有对应的处理函数
+                if (this.narrowPhaseCollision[collisionType]) {
+                    if (this.narrowPhaseCollision[collisionType](entityA, entityB)) {
+                        this.makeCollisionPair(entityA, entityB);
+                    }
                 }
             }
         }
@@ -504,7 +525,7 @@ export class ECSManager {
     }
     
     collisionResponseSystem(world: IWorld) {
-        const entities = this.collisionQuery(world);
+        const entities = this.responseQuery(world);
         const deltaTime = game.deltaTime;
 
         for (let i = 0; i < entities.length; i++) {
@@ -513,14 +534,20 @@ export class ECSManager {
             for (let j = i + 1; j < entities.length; j++) {
                 const eid2 = entities[j];
                 
-                if (this.IsStatic.value[eid1] && this.IsStatic.value[eid2]) continue;
+                // 使用 BitStatus 检查静态状态
+                const isStatic1 = (this.BitStatus.value[eid1] & StatusEnum.STATIC) !== 0;
+                const isStatic2 = (this.BitStatus.value[eid2] & StatusEnum.STATIC) !== 0;
+                
+                if (isStatic1 && isStatic2) continue;
                 
                 if (this.checkAABBOverlap(eid1, eid2)) {
-                    const m1 = this.Mass.value[eid1];
-                    const m2 = this.Mass.value[eid2];
-                    const I1 = this.MomentOfInertia.value[eid1];
-                    const I2 = this.MomentOfInertia.value[eid2];
+                    // 获取质量和转动惯量
+                    const m1 = isStatic1 ? Infinity : this.Mass.value[eid1];
+                    const m2 = isStatic2 ? Infinity : this.Mass.value[eid2];
+                    const I1 = isStatic1 ? Infinity : this.MomentOfInertia.value[eid1];
+                    const I2 = isStatic2 ? Infinity : this.MomentOfInertia.value[eid2];
                     
+                    // 计算相对位置
                     const dx = this.WorldPosition.x[eid2] - this.WorldPosition.x[eid1];
                     const dy = this.WorldPosition.y[eid2] - this.WorldPosition.y[eid1];
                     const dz = this.WorldPosition.z[eid2] - this.WorldPosition.z[eid1];
@@ -531,6 +558,7 @@ export class ECSManager {
                         const ny = dy / length;
                         const nz = dz / length;
 
+                        // 计算相对速度
                         const relativeVx = this.Velocity.x[eid2] - this.Velocity.x[eid1];
                         const relativeVy = this.Velocity.y[eid2] - this.Velocity.y[eid1];
                         const relativeVz = this.Velocity.z[eid2] - this.Velocity.z[eid1];
@@ -539,47 +567,57 @@ export class ECSManager {
                         
                         if (relativeSpeed > 0) continue;
 
-                        const restitution = 0.8;
-                        const j = -(1 + restitution) * relativeSpeed / (1/m1 + 1/m2);
+                        // 计算冲量
+                        const restitution = 0.8; // 可以根据物体材质从组件中获取
+                        const j = -(1 + restitution) * relativeSpeed / 
+                                (1/m1 + 1/m2); // 对于静态物体，1/Infinity = 0
 
-                        if (!this.IsStatic.value[eid1]) {
+                        // 应用线性冲量
+                        if (!isStatic1) {
                             this.Velocity.x[eid1] -= (j * nx) / m1;
                             this.Velocity.y[eid1] -= (j * ny) / m1;
                             this.Velocity.z[eid1] -= (j * nz) / m1;
                         }
                         
-                        if (!this.IsStatic.value[eid2]) {
+                        if (!isStatic2) {
                             this.Velocity.x[eid2] += (j * nx) / m2;
                             this.Velocity.y[eid2] += (j * ny) / m2;
                             this.Velocity.z[eid2] += (j * nz) / m2;
                         }
 
-                        if (!this.IsStatic.value[eid1]) {
-                            const radius = 1.0;
-                            const r = radius * nx;
-                            const deltaOmega1 = (j * r) / I1;
+                        // 应用角冲量
+                        if (!isStatic1) {
+                            // 可以从形状组件获取特征半径
+                            const radius1 = (this.BitStatus.value[eid1] & StatusEnum.SPHERE) !== 0 
+                                ? this.ShapeSize.radius[eid1] 
+                                : Math.min(this.ShapeSize.x[eid1], this.ShapeSize.y[eid1], this.ShapeSize.z[eid1]) * 0.5;
+                            const r1 = radius1 * nx;
+                            const deltaOmega1 = (j * r1) / I1;
                             this.AngularVelocity.x[eid1] += deltaOmega1;
                             this.AngularVelocity.y[eid1] += deltaOmega1;
                             this.AngularVelocity.z[eid1] += deltaOmega1;
                         }
                         
-                        if (!this.IsStatic.value[eid2]) {
-                            const radius = 1.0;
-                            const r = radius * nx;
-                            const deltaOmega2 = (j * r) / I2;
+                        if (!isStatic2) {
+                            const radius2 = (this.BitStatus.value[eid2] & StatusEnum.SPHERE) !== 0 
+                                ? this.ShapeSize.radius[eid2] 
+                                : Math.min(this.ShapeSize.x[eid2], this.ShapeSize.y[eid2], this.ShapeSize.z[eid2]) * 0.5;
+                            const r2 = radius2 * nx;
+                            const deltaOmega2 = (j * r2) / I2;
                             this.AngularVelocity.x[eid2] -= deltaOmega2;
                             this.AngularVelocity.y[eid2] -= deltaOmega2;
                             this.AngularVelocity.z[eid2] -= deltaOmega2;
                         }
 
+                        // 位置修正（避免穿透）
                         const offset = 0.1;
-                        if (!this.IsStatic.value[eid1]) {
+                        if (!isStatic1) {
                             this.WorldPosition.x[eid1] -= nx * offset;
                             this.WorldPosition.y[eid1] -= ny * offset;
                             this.WorldPosition.z[eid1] -= nz * offset;
                         }
                         
-                        if (!this.IsStatic.value[eid2]) {
+                        if (!isStatic2) {
                             this.WorldPosition.x[eid2] += nx * offset;
                             this.WorldPosition.y[eid2] += ny * offset;
                             this.WorldPosition.z[eid2] += nz * offset;
@@ -589,15 +627,6 @@ export class ECSManager {
             }
         }
     }
-
-    pipeline = pipe(
-        this.phaseCollisionDetectionSystem,
-        this.collisionResponseSystem,
-        this.moveSystem,
-        this.syncSystem,
-        this.updateAABBSystem,
-        this.testSystem
-    );
 
     private cross(a: {x: number, y: number, z: number}, b: {x: number, y: number, z: number}) {
         return {
@@ -631,5 +660,14 @@ export class ECSManager {
                halfExtents.y * Math.abs(this.dot(axes[1], axis)) +
                halfExtents.z * Math.abs(this.dot(axes[2], axis));
     }
+
+    pipeline = pipe(
+        (world: IWorld) => this.phaseCollisionDetectionSystem(world),
+        //(world: IWorld) => this.collisionResponseSystem(world),
+        (world: IWorld) => this.moveSystem(world),
+        (world: IWorld) => this.syncSystem(world),
+        (world: IWorld) => this.updateAABBSystem(world),
+        (world: IWorld) => this.testSystem(world)
+    );
 }
 
